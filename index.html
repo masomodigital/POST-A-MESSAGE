@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Post Masomo Message</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 400px; margin: 40px auto; padding: 10px; }
+  label { display: block; margin-top: 15px; }
+  input, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+  textarea { height: 150px; resize: vertical; }
+  button { margin-top: 20px; padding: 10px 15px; font-size: 16px; }
+  #result { margin-top: 25px; white-space: pre-wrap; background: #f0f0f0; padding: 15px; border-radius: 5px; }
+  .error { color: red; }
+</style>
+</head>
+<body>
+
+<h2>Post Your Message</h2>
+
+<form id="postForm">
+  <label for="nationalId">Your National ID:</label>
+  <input type="text" id="nationalId" name="nationalId" required />
+
+  <label for="message">Message (max 1000 words):</label>
+  <textarea id="message" name="message" required></textarea>
+
+  <button type="submit">Submit Message</button>
+</form>
+
+<div id="result"></div>
+
+<script>
+  const form = document.getElementById('postForm');
+  const resultDiv = document.getElementById('result');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    resultDiv.textContent = "Submitting...";
+
+    const nationalId = form.nationalId.value.trim();
+    const message = form.message.value.trim();
+
+    // Basic word count check before sending
+    const wordCount = message.split(/\s+/).filter(Boolean).length;
+    if (wordCount > 1000) {
+      resultDiv.textContent = "Message exceeds 1000 words limit.";
+      resultDiv.className = "error";
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.append('action', 'post');
+    params.append('nationalId', nationalId);
+    params.append('message', message);
+
+    try {
+      const response = await fetch('https://script.google.com/macros/s/AKfycbzJasm8v5Bav1z6pqa015Cbrjf96omdGcAEXWk201z9J2ijfv3f3RwZ9BI_KZ15pk1MGg/exec', {
+        method: 'POST',
+        body: params,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        resultDiv.className = "";
+        resultDiv.textContent = data.message;
+        form.message.value = "";
+      } else {
+        resultDiv.className = "error";
+        resultDiv.textContent = data.error || "Unknown error occurred.";
+      }
+    } catch (err) {
+      resultDiv.className = "error";
+      resultDiv.textContent = "Request failed: " + err.message;
+    }
+  });
+</script>
+
+</body>
+</html>
